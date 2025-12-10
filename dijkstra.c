@@ -295,7 +295,7 @@ E: grafo con pesos no negativos, indices inicio y fin validos.
 S: retorna puntero a Camino minimo o NULL si no hay ruta/error.
 R: grafo->peso cuadrada, memoria disponible; pesos >=0.
 */
-struct Camino* dijkstra(Grafo* grafo, int inicio, int fin) {
+struct Camino* dijkstra(struct Grafo* grafo, int inicio, int fin) {
     //validar restricciones basicas
     if (grafo == NULL || grafo->vertices <= 0 || grafo->peso == NULL) {
         return NULL;
