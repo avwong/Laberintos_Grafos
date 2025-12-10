@@ -21,4 +21,7 @@ int build_graph(const struct Maze* maze, struct Grafo* grafo, int* startIndex, i
 // genera grafo aleatorio no dirigido con pesos 1 segun probabilidad.
 int generate_random_graph(struct Grafo* grafo, int vertices, double edgeProb);
 
+// construye una representacion visual de laberinto a partir de un grafo aleatorio
+int build_maze_from_graph(struct Grafo* grafo, struct Maze* maze, int startIndex, int goalIndex);
+
 #endif

@@ -116,11 +116,13 @@ int main() {
             int *parent = calloc(graph.vertices, sizeof(int));       //para reconstruir el camino
             int *visitOrder = calloc(graph.vertices, sizeof(int));   //orden de exploracion
             int visitCount = 0;
+            int *pathSeq = calloc(graph.vertices, sizeof(int));      //secuencia start->goal para mostrar
             
-            if (parent == NULL || visitOrder == NULL) {
+            if (parent == NULL || visitOrder == NULL || pathSeq == NULL) {
                 printf("No se pudo reservar memoria para BFS.\n");
                 free(parent);
                 free(visitOrder);
+                free(pathSeq);
                 continue;
             }
             
@@ -130,15 +132,24 @@ int main() {
             //mostrar el orden en que se visitaron los nodos
             print_visit_order(&graph, visitOrder, visitCount);
             
+            int len = -1;
             if (found) {
-                //mostrar el camino encontrado en el laberinto
-                print_path_on_maze(&maze, &graph, parent, startIndex, goalIndex);
+                //reconstruir secuencia del camino para visualizarlo
+                len = build_path_sequence(parent, startIndex, goalIndex, graph.vertices, pathSeq);
+                if (len > 0) {
+                    //mostrar el camino encontrado en el laberinto
+                    print_path_steps(&maze, &graph, parent, startIndex, goalIndex);
+                    print_path_on_maze(&maze, &graph, parent, startIndex, goalIndex);
+                } else {
+                    printf("No se pudo reconstruir el camino.\n");
+                }
             } else {
                 printf("No hay camino entre I y F.\n");
             }
             
             free(parent);
             free(visitOrder);
+            free(pathSeq);
         } else if (option == 3) {
             // Ejecutar Dijkstra en el laberinto cargado
             if (!mazeLoaded) {
@@ -169,6 +180,7 @@ int main() {
                         parent[camino->nodos[i]] = camino->nodos[i - 1];
                     }
                     //mostrar el camino en el laberinto
+                    print_path_steps(&maze, &graph, parent, startIndex, goalIndex);
                     print_path_on_maze(&maze, &graph, parent, startIndex, goalIndex);
                     free(parent);
                 }
@@ -214,37 +226,49 @@ int main() {
             //generar un grafo aleatorio con el numero de nodos y probabilidad especificados
             if (generate_random_graph(&graph, vertices, edgeProb) == 0) {
                 graphReady = 1;
-                mazeLoaded = 0; // este grafo no corresponde a ningun laberinto cargado
-                
+
                 //seleccionar nodos de inicio y meta aleatorios
                 startIndex = rand() % vertices;
                 do {
                     goalIndex = rand() % vertices;
                 } while (goalIndex == startIndex && vertices > 1);
 
+                //construir representacion visual del laberinto a partir del grafo
+                if (build_maze_from_graph(&graph, &maze, startIndex, goalIndex) == 0) {
+                    mazeLoaded = 1;
+                    printf("Laberinto generado. Dimensiones: %d x %d. Nodos: %d.\n", maze.rows, maze.cols, graph.vertices);
+                    printf("Inicio (I): nodo %d, Meta (F): nodo %d.\n", startIndex, goalIndex);
+                } else {
+                    mazeLoaded = 0;
+                    printf("No se pudo generar la representacion visual del laberinto.\n");
+                    continue;
+                }
+
                 //reservar memoria para BFS
                 int *parent = calloc(graph.vertices, sizeof(int));
                 int *visitOrder = calloc(graph.vertices, sizeof(int));
                 int visitCount = 0;
-                
+
                 if (parent == NULL || visitOrder == NULL) {
                     printf("No se pudo reservar memoria para BFS.\n");
                     free(parent);
                     free(visitOrder);
                     continue;
                 }
-                
+
                 //ejecutar BFS en el grafo aleatorio
                 int found = bfs(&graph, startIndex, goalIndex, parent, visitOrder, &visitCount);
-                
+
                 //mostrar resultados
                 print_adjacency_matrix(&graph); //mostrar la matriz de adyacencia
-                printf("BFS desde %d hasta %d\n", startIndex, goalIndex); //mostrar nodos de inicio y meta
-                print_visit_order_simple(visitOrder, visitCount); //mostrar orden de visita
+                printf("BFS desde nodo %d hasta nodo %d\n", startIndex, goalIndex);
+
                 if (found) {
-                    print_path_indices(parent, startIndex, goalIndex, graph.vertices); //mostrar camino encontrado
+                    //mostrar laberinto con animacion paso a paso
+                    print_path_steps(&maze, &graph, parent, startIndex, goalIndex);
+                    print_path_on_maze(&maze, &graph, parent, startIndex, goalIndex);
                 } else {
-                    printf("No hay camino entre %d y %d.\n", startIndex, goalIndex); //indicar si no hay camino
+                    printf("No hay camino entre %d y %d.\n", startIndex, goalIndex);
                 }
                 free(parent);
                 free(visitOrder);
@@ -272,29 +296,57 @@ int main() {
                 printf("Probabilidad fuera de rango. Debe ser 0 a 100.\n");
                 continue;
             }
-            double edgeProb = probPct / 100.0;  
+            double edgeProb = probPct / 100.0;
 
             //generar un grafo aleatorio
             if (generate_random_graph(&graph, vertices, edgeProb) == 0) {
                 graphReady = 1;
-                mazeLoaded = 0; // este grafo no corresponde a ningun laberinto cargado
-                
+
                 //seleccionar nodos de inicio y meta aleatorios
                 startIndex = rand() % vertices;
                 do {
                     goalIndex = rand() % vertices;
                 } while (goalIndex == startIndex && vertices > 1);
 
+                //construir representacion visual del laberinto a partir del grafo
+                if (build_maze_from_graph(&graph, &maze, startIndex, goalIndex) == 0) {
+                    mazeLoaded = 1;
+                    printf("Laberinto generado. Dimensiones: %d x %d. Nodos: %d.\n", maze.rows, maze.cols, graph.vertices);
+                    printf("Inicio (I): nodo %d, Meta (F): nodo %d.\n", startIndex, goalIndex);
+                } else {
+                    mazeLoaded = 0;
+                    printf("No se pudo generar la representacion visual del laberinto.\n");
+                    continue;
+                }
+
                 //mostrar la matriz de adyacencia del grafo generado
                 print_adjacency_matrix(&graph);
-                printf("Dijkstra desde %d hasta %d\n", startIndex, goalIndex);
-                
+                printf("Dijkstra desde nodo %d hasta nodo %d\n", startIndex, goalIndex);
+
                 //ejecutar el algoritmo de Dijkstra
                 struct Camino* camino = dijkstra(&graph, startIndex, goalIndex);
                 if (camino != NULL) {
                     printf("Camino encontrado:\n");
                     //mostrar el camino y su valor total
                     imprimirCaminoDijkstra(camino);
+
+                    //reconstruir arreglo parent para visualizacion
+                    int* parent = calloc(graph.vertices, sizeof(int));
+                    if (parent != NULL) {
+                        //inicializar todos los padres en -1
+                        for (int i = 0; i < graph.vertices; ++i) {
+                            parent[i] = -1;
+                        }
+                        //reconstruir el arreglo parent desde el camino encontrado
+                        for (int i = 1; i < camino->longitud; ++i) {
+                            parent[camino->nodos[i]] = camino->nodos[i - 1];
+                        }
+                        //mostrar laberinto con animacion paso a paso
+                        print_path_steps(&maze, &graph, parent, startIndex, goalIndex);
+                        print_path_on_maze(&maze, &graph, parent, startIndex, goalIndex);
+                        free(parent);
+                    }
+
                     liberarCamino(camino);
                 } else {
                     printf("No hay camino entre %d y %d.\n", startIndex, goalIndex);

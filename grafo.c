@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "grafo.h"
 
@@ -260,27 +261,175 @@ int generate_random_graph(struct Grafo* grafo, int vertices, double edgeProb) {
     grafo->indexToCoord = nuevo->indexToCoord;
     free(nuevo); //liberar la estructura temporal
 
-    //inicializar las coordenadas (no aplica para grafos aleatorios, solo por compatibilidad)
+    //distribuir los nodos en una cuadricula logica
+    //calcular dimensiones de la cuadricula (aproximadamente cuadrada)
+    int gridCols = (int)(sqrt((double)vertices) + 0.5);
+    if (gridCols < 1) gridCols = 1;
+
+    //asignar coordenadas a cada nodo en la cuadricula
     for (int i = 0; i < vertices; ++i) {
-        grafo->indexToCoord[i].row = i;
-        grafo->indexToCoord[i].col = 0;
+        grafo->indexToCoord[i].row = i / gridCols;
+        grafo->indexToCoord[i].col = i % gridCols;
     }
 
-    //generar aristas aleatorias
-    //solo revisar la mitad superior de la matriz para evitar duplicados
+    //generar aristas aleatorias SOLO entre nodos adyacentes en la cuadricula
+    //esto asegura que el grafo corresponda al laberinto visual
     for (int i = 0; i < vertices; ++i) {
-        for (int j = i + 1; j < vertices; ++j) {
-            //generar un numero aleatorio entre 0 y 1
-            double r = (double)rand() / (double)RAND_MAX;
-            
-            //si el numero es menor o igual a la probabilidad, crear la arista
-            if (r <= edgeProb) {
-                //asignar peso 1 en ambas direcciones (grafo no dirigido)
-                grafo->peso[i][j] = 1;
-                grafo->peso[j][i] = 1;
+        int iRow = grafo->indexToCoord[i].row;
+        int iCol = grafo->indexToCoord[i].col;
+
+        //revisar los 4 vecinos potenciales (arriba, abajo, izquierda, derecha)
+        int dr[4] = {-1, 1, 0, 0};
+        int dc[4] = {0, 0, -1, 1};
+
+        for (int dir = 0; dir < 4; ++dir) {
+            int neighborRow = iRow + dr[dir];
+            int neighborCol = iCol + dc[dir];
+
+            //buscar el nodo que corresponde a esta posicion adyacente
+            for (int j = 0; j < vertices; ++j) {
+                if (grafo->indexToCoord[j].row == neighborRow &&
+                    grafo->indexToCoord[j].col == neighborCol) {
+
+                    //evitar crear la arista dos veces
+                    if (i < j) {
+                        //generar numero aleatorio para decidir si crear la arista
+                        double r = (double)rand() / (double)RAND_MAX;
+
+                        if (r <= edgeProb) {
+                            //crear arista bidireccional con peso 1
+                            grafo->peso[i][j] = 1;
+                            grafo->peso[j][i] = 1;
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
-    
+
     return 0; //exito
+}
+
+/*
+E: grafo con indexToCoord lleno, puntero a maze, indices de start y goal.
+S: llena maze con representacion visual del grafo; 0 si OK, -1 en error.
+R: grafo valido con vertices > 0, indices dentro de rango.
+*/
+int build_maze_from_graph(struct Grafo* grafo, struct Maze* maze, int startIndex, int goalIndex) {
+    if (grafo == NULL || maze == NULL || grafo->vertices <= 0) {
+        return -1;
+    }
+
+    if (startIndex < 0 || goalIndex < 0 || startIndex >= grafo->vertices || goalIndex >= grafo->vertices) {
+        return -1;
+    }
+
+    //guardar las coordenadas originales del grafo antes de modificarlas
+    struct Point* originalCoords = calloc(grafo->vertices, sizeof(struct Point));
+    if (originalCoords == NULL) {
+        return -1;
+    }
+    for (int i = 0; i < grafo->vertices; ++i) {
+        originalCoords[i] = grafo->indexToCoord[i];
+    }
+
+    //encontrar las dimensiones del laberinto basadas en las coordenadas de los nodos
+    int maxRow = 0, maxCol = 0;
+    for (int i = 0; i < grafo->vertices; ++i) {
+        if (originalCoords[i].row > maxRow) {
+            maxRow = originalCoords[i].row;
+        }
+        if (originalCoords[i].col > maxCol) {
+            maxCol = originalCoords[i].col;
+        }
+    }
+
+    //crear un laberinto con espacio para paredes entre nodos y bordes
+    //cada nodo ocupa 2x2 caracteres (nodo + espacio horizontal/vertical)
+    int mazeRows = maxRow * 2 + 3; //+3 para bordes superior e inferior y el nodo final
+    int mazeCols = maxCol * 2 + 3; //+3 para bordes izquierdo y derecho y el nodo final
+
+    //validar que no exceda los limites
+    if (mazeRows > MAX_ROWS || mazeCols > MAX_COLS) {
+        printf("El laberinto generado excede las dimensiones maximas.\n");
+        free(originalCoords);
+        return -1;
+    }
+
+    maze->rows = mazeRows;
+    maze->cols = mazeCols;
+
+    //inicializar todo con muros
+    for (int r = 0; r < mazeRows; ++r) {
+        for (int c = 0; c < mazeCols; ++c) {
+            maze->cells[r][c] = WALL;
+        }
+        maze->cells[r][mazeCols] = '\0';
+    }
+
+    //colocar los nodos en el laberinto y actualizar sus coordenadas
+    for (int i = 0; i < grafo->vertices; ++i) {
+        int nodeRow = originalCoords[i].row;
+        int nodeCol = originalCoords[i].col;
+
+        //mapear coordenadas del nodo a posicion en el laberinto
+        int mazeRow = nodeRow * 2 + 1;
+        int mazeCol = nodeCol * 2 + 1;
+
+        //actualizar las coordenadas del grafo para que apunten al laberinto visual
+        grafo->indexToCoord[i].row = mazeRow;
+        grafo->indexToCoord[i].col = mazeCol;
+
+        //marcar la posicion del nodo
+        if (i == startIndex) {
+            maze->cells[mazeRow][mazeCol] = START;
+        } else if (i == goalIndex) {
+            maze->cells[mazeRow][mazeCol] = END;
+        } else {
+            maze->cells[mazeRow][mazeCol] = '.';
+        }
+    }
+
+    //crear caminos entre nodos conectados
+    for (int i = 0; i < grafo->vertices; ++i) {
+        int fromRow = originalCoords[i].row;
+        int fromCol = originalCoords[i].col;
+        int mazeFromRow = fromRow * 2 + 1;
+        int mazeFromCol = fromCol * 2 + 1;
+
+        for (int j = i + 1; j < grafo->vertices; ++j) {
+            //si hay una arista entre i y j
+            if (grafo->peso[i][j] > 0) {
+                int toRow = originalCoords[j].row;
+                int toCol = originalCoords[j].col;
+                int mazeToRow = toRow * 2 + 1;
+                int mazeToCol = toCol * 2 + 1;
+
+                //si son nodos adyacentes horizontalmente
+                if (fromRow == toRow && abs(fromCol - toCol) == 1) {
+                    int wallCol = (mazeFromCol + mazeToCol) / 2;
+                    maze->cells[mazeFromRow][wallCol] = '.';
+                }
+                //si son nodos adyacentes verticalmente
+                else if (fromCol == toCol && abs(fromRow - toRow) == 1) {
+                    int wallRow = (mazeFromRow + mazeToRow) / 2;
+                    maze->cells[wallRow][mazeFromCol] = '.';
+                }
+            }
+        }
+    }
+
+    //agregar bordes decorativos con '#'
+    for (int c = 0; c < mazeCols; ++c) {
+        maze->cells[0][c] = '#';
+        maze->cells[mazeRows - 1][c] = '#';
+    }
+    for (int r = 0; r < mazeRows; ++r) {
+        maze->cells[r][0] = '#';
+        maze->cells[r][mazeCols - 1] = '#';
+    }
+
+    free(originalCoords);
+    return 0;
 }
