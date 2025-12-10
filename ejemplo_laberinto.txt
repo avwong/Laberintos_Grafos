@@ -1,5 +1,7 @@
-XXXXXXXXX
-#I..X...#
-#.XX.X.#f
-#...X...#
-XXXXXXXXX
+XXXXXXXXXXX
+#I..X.....#
+#.XX.X.XX.#
+#...X...X.#
+#.XXX.X.X.#
+#.....X..F#
+XXXXXXXXXXX

@@ -13,8 +13,8 @@
 static void show_menu() {
     printf("\n--- Menu ---\n");
     printf("1) Cargar laberinto desde archivo\n");
-    printf("2) Ejecutar BFS (I -> f)\n");
-    printf("3) Ejecutar Dijkstra (I -> f)\n");
+    printf("2) Ejecutar BFS (I -> F)\n");
+    printf("3) Ejecutar Dijkstra (I -> F)\n");
     printf("4) Mostrar matriz de adyacencia\n");
     printf("5) Generar grafo aleatorio y ejecutar BFS\n");
     printf("6) Generar grafo aleatorio y ejecutar Dijkstra\n");
@@ -29,7 +29,7 @@ int main(void) {
     //estructura del grafo que representa las conexiones entre celdas/nodos
     struct Grafo graph = {0};
     
-    //indices del nodo de inicio (S) y meta (E) en el grafo
+    //indices del nodo de inicio (I) y meta (F) en el grafo
     int startIndex = -1;
     int goalIndex = -1;
     
@@ -44,7 +44,7 @@ int main(void) {
     srand((unsigned)time(NULL));
 
     printf("Proyecto Laberinto + Grafo\n");
-    printf("Formato de archivo: mismo numero de columnas por fila. Usa 'X' para muro, '.' o espacio para camino, 'I' inicio, 'f' meta.\n");
+    printf("Formato de archivo: mismo numero de columnas por fila. Usa 'X' para muro, '.' o espacio para camino, 'I' inicio, 'F' meta.\n");
 
     for (;;) {
         show_menu();
@@ -71,10 +71,35 @@ int main(void) {
                 //cada celda transitable se convierte en un nodo
                 //las celdas adyacentes se conectan con aristas
                 if (build_graph(&maze, &graph, &startIndex, &goalIndex) == 0) {
+                    //verificar que exista al menos un camino entre inicio y meta
+                    int *parent = calloc(graph.vertices, sizeof(int));
+                    int *visitOrder = calloc(graph.vertices, sizeof(int));
+                    int visitCount = 0;
+                    if (parent == NULL || visitOrder == NULL) {
+                        printf("No se pudo reservar memoria para validar el laberinto.\n");
+                        free(parent);
+                        free(visitOrder);
+                        liberarGrafo(&graph);
+                        mazeLoaded = 0;
+                        graphReady = 0;
+                        continue;
+                    }
+                    int found = bfs(&graph, startIndex, goalIndex, parent, visitOrder, &visitCount);
+                    free(parent);
+                    free(visitOrder);
+                    
+                    if (!found) {
+                        printf("El laberinto no tiene camino entre I y F. Cargue otro archivo.\n");
+                        liberarGrafo(&graph);
+                        mazeLoaded = 0;
+                        graphReady = 0;
+                        continue;
+                    }
+
                     mazeLoaded = 1;
                     graphReady = 1;
                     printf("Laberinto cargado. Dimensiones: %d x %d. Nodos: %d.\n", maze.rows, maze.cols, graph.vertices);
-                    printf("Inicio (I): indice %d, Meta (f): indice %d.\n", startIndex, goalIndex);
+                    printf("Inicio (I): indice %d, Meta (F): indice %d.\n", startIndex, goalIndex);
                 } else {
                     mazeLoaded = 0;
                     graphReady = 0;
@@ -109,7 +134,7 @@ int main(void) {
                 //mostrar el camino encontrado en el laberinto
                 print_path_on_maze(&maze, &graph, parent, startIndex, goalIndex);
             } else {
-                printf("No hay camino entre I y f.\n");
+                printf("No hay camino entre I y F.\n");
             }
             
             free(parent);
@@ -150,7 +175,7 @@ int main(void) {
                 
                 liberarCamino(camino);
             } else {
-                printf("No hay camino entre I y f.\n");
+                printf("No hay camino entre I y F.\n");
             }
         } else if (option == 4) {
             //OPCION 4: Mostrar la matriz de adyacencia del grafo

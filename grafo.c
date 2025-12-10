@@ -105,13 +105,17 @@ void liberarGrafo(struct Grafo* grafo) {
         }
         //liberar el arreglo de punteros
         free(grafo->peso);
+        grafo->peso = NULL;
     }
     
     //liberar el arreglo de mapeo de indices a coordenadas
-    free(grafo->indexToCoord);
+    if (grafo->indexToCoord != NULL) {
+        free(grafo->indexToCoord);
+        grafo->indexToCoord = NULL;
+    }
     
-    //liberar la estructura principal del grafo
-    free(grafo);
+    //reiniciar el contador de vertices
+    grafo->vertices = 0;
 }
 
 /*
@@ -218,7 +222,7 @@ int build_graph(const struct Maze* maze, struct Grafo* grafo, int* startIndex, i
 
     //validar que se encontraron los puntos de inicio y meta
     if (*startIndex == -1 || *goalIndex == -1) {
-        printf("Faltan los puntos de inicio (I) y/o meta (f) en el laberinto.\n");
+        printf("Faltan los puntos de inicio (I) y/o meta (F) en el laberinto.\n");
         liberarGrafo(grafo);
         return -1;
     }
