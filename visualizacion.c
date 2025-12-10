@@ -1,13 +1,40 @@
-/*
-E: n/a (implementacion).
-S: utilidades de impresion para recorridos y caminos en el laberinto/grafo.
-R: usar con visualizacion.h.
-.*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "visualizacion.h"
+
+/*
+E: paso actual, nodo procesado, arreglos de valores y visitados, numero de nodos.
+S: imprime el estado actual de las distancias y visitados en Dijkstra.
+R: arreglos validos de tamano n.
+*/
+void print_estado_dijkstra(int paso, int actual, const int *val, const int *visitado, int n) {
+    printf("\nPaso %d: procesamos el nodo %d\n", paso, actual);
+    printf("Distancias despues de relajar vecinos:\n");
+
+    for (int i = 0; i < n; ++i) {
+        char dist[16];
+        if (val[i] >= INT_MAX / 8) {
+            snprintf(dist, sizeof(dist), "inf");
+        } else {
+            snprintf(dist, sizeof(dist), "%d", val[i]);
+        }
+
+        const char* estado;
+        if (visitado[i]) {
+            estado = "visitado";
+        } else if (val[i] >= INT_MAX / 8) {
+            estado = "sin ruta";
+        } else {
+            estado = "pendiente";
+        }
+
+        const char* marca = (i == actual) ? " <- actual" : "";
+        printf("  %2d) dist=%-7s estado=%s%s\n", i, dist, estado, marca);
+    }
+}
 
 /*
 E: grafo y arreglo de visita BFS con su cantidad.
@@ -45,7 +72,7 @@ void print_path_on_maze(const struct Maze *maze, const struct Grafo *graph, cons
         strcpy(display[r], maze->cells[r]);
     }
 
-    // Recorre desde goal hacia start usando parent para marcar el camino.
+    //recorre desde goal hacia start usando parent para marcar el camino.
     int v = goal;
     while (v != -1) {
         struct Point p = graph->indexToCoord[v];
@@ -70,7 +97,7 @@ void print_path_on_maze(const struct Maze *maze, const struct Grafo *graph, cons
 E: arreglo parent, indices inicio/goal y numero de vertices.
 S: imprime camino por indices o indica si no existe.
 R: parent de tamano vertices; indices dentro de rango.
-.*/
+*/
 void print_path_indices(const int *parent, int start, int goal, int vertices) {
     int *stack = calloc(vertices, sizeof(int));
     if (stack == NULL) {
@@ -78,7 +105,7 @@ void print_path_indices(const int *parent, int start, int goal, int vertices) {
         return;
     }
 
-    // Apila el camino desde la meta hacia el inicio para invertirlo.
+    //apila el camino desde la meta hacia el inicio para invertirlo.
     int len = 0;
     int v = goal;
     while (v != -1 && len < vertices) {
@@ -127,4 +154,36 @@ void print_adjacency_matrix(const struct Grafo *graph) {
         }
         printf("\n");
     }
+}
+
+/*
+E: puntero a Camino valido.
+S: imprime nodos en orden y valor total; indica si es NULL.
+R: camino no nulo; longitud coherente con arreglo nodos.
+*/
+void imprimirCaminoDijkstra(struct Camino* camino) {
+    //validaciones
+    if (camino == NULL) {
+        printf("No hay camino calculado.\n");
+        return;
+    }
+
+    if (camino->nodos == NULL || camino->longitud <= 0) {
+        printf("Error: camino invalido (nodos NULL o longitud <= 0).\n");
+        return;
+    }
+    
+    //imprimir el valor total del camino
+    printf("Camino (valor %d): ", camino->valorTotal);
+    
+    //imprimir cada nodo del camino
+    for (int i = 0; i < camino->longitud; ++i) {
+        printf("%d", camino->nodos[i]);
+        
+        //imprimir flecha si no es el ultimo nodo
+        if (i + 1 < camino->longitud) {
+            printf(" -> ");
+        }
+    }
+    printf("\n");
 }

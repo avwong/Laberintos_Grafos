@@ -3,33 +3,7 @@
 #include <stdlib.h>
 
 #include "dijkstra.h"
-
-//imprime el estado actual de las distancias y visitados en Dijkstra
-static void print_estado_dijkstra(int paso, int actual, const int *val, const int *visitado, int n) {
-    printf("\nPaso %d: procesamos el nodo %d\n", paso, actual);
-    printf("Distancias despues de relajar vecinos:\n");
-
-    for (int i = 0; i < n; ++i) {
-        char dist[16];
-        if (val[i] >= INT_MAX / 8) {
-            snprintf(dist, sizeof(dist), "inf");
-        } else {
-            snprintf(dist, sizeof(dist), "%d", val[i]);
-        }
-
-        const char* estado;
-        if (visitado[i]) {
-            estado = "visitado";
-        } else if (val[i] >= INT_MAX / 8) {
-            estado = "sin ruta";
-        } else {
-            estado = "pendiente";
-        }
-
-        const char* marca = (i == actual) ? " <- actual" : "";
-        printf("  %2d) dist=%-7s estado=%s%s\n", i, dist, estado, marca);
-    }
-}
+#include "visualizacion.h"
 
 //FUNCIONES PARA EL HEAP (COLA DE PRIORIDAD)
 
@@ -445,38 +419,6 @@ struct Camino* dijkstra(struct Grafo* grafo, int inicio, int fin) {
     free(parent);
     free(visitado);
     return camino;
-}
-
-/*
-E: puntero a Camino valido.
-S: imprime nodos en orden y valor total; indica si es NULL.
-R: camino no nulo; longitud coherente con arreglo nodos.
-*/
-void imprimirCamino(struct Camino* camino) {
-    //validaciones
-    if (camino == NULL) {
-        printf("No hay camino calculado.\n");
-        return;
-    }
-
-    if (camino->nodos == NULL || camino->longitud <= 0) {
-        printf("Error: camino invalido (nodos NULL o longitud <= 0).\n");
-        return;
-    }
-    
-    //imprimir el valor total del camino
-    printf("Camino (valor %d): ", camino->valorTotal);
-    
-    //imprimir cada nodo del camino
-    for (int i = 0; i < camino->longitud; ++i) {
-        printf("%d", camino->nodos[i]);
-        
-        //imprimir flecha si no es el ultimo nodo
-        if (i + 1 < camino->longitud) {
-            printf(" -> ");
-        }
-    }
-    printf("\n");
 }
 
 /*

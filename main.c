@@ -22,7 +22,7 @@ static void show_menu() {
     printf("> ");
 }
 
-int main(void) {
+int main() {
     //estructura que almacena el laberinto cargado desde archivo
     struct Maze maze = (struct Maze){0};
     
@@ -152,7 +152,7 @@ int main(void) {
             if (camino != NULL) {
                 printf("Dijkstra encontro un camino:\n");
                 //imprimir el camino con su valor total
-                imprimirCamino(camino);
+                imprimirCaminoDijkstra(camino);
                 
                 //reconstruir arreglo parent para visualizacion en el laberinto
                 //el algoritmo Dijkstra retorna una estructura Camino, pero la funcion
@@ -294,7 +294,7 @@ int main(void) {
                 if (camino != NULL) {
                     printf("Camino encontrado:\n");
                     //mostrar el camino y su valor total
-                    imprimirCamino(camino);
+                    imprimirCaminoDijkstra(camino);
                     liberarCamino(camino);
                 } else {
                     printf("No hay camino entre %d y %d.\n", startIndex, goalIndex);

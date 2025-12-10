@@ -3,11 +3,11 @@
 
 #include "laberinto.h"
 
-//representacion de grafo no dirigido con matriz de pesos.
+//representacion de grafo no dirigido con matriz de pesos
 struct Grafo {
     int vertices; // numero de nodos
     int** peso; // matriz de pesos, 0 o negativo indica que no hay arista
-    struct Point* indexToCoord; // mapa opcional indice -> coordenada (para laberintos)
+    struct Point* indexToCoord; // indice a coordenada (para laberintos)
 };
 
 // funciones para crear, modificar y liberar grafos
