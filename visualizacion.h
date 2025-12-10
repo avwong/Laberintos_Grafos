@@ -28,7 +28,7 @@ E: laberinto, grafo, arreglo parent y nodos inicio/goal.
 S: imprime laberinto con camino marcado con 'o'.
 R: parent describe una ruta valida entre goal y start.
 .*/
-void print_path_on_maze(const Maze *maze, const struct Grafo *graph, const int *parent, int start, int goal);
+void print_path_on_maze(const struct Maze *maze, const struct Grafo *graph, const int *parent, int start, int goal);
 
 /*
 E: arreglo parent, indices inicio/goal y numero de vertices.

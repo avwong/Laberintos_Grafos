@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -13,8 +13,8 @@
 static void show_menu() {
     printf("\n--- Menu ---\n");
     printf("1) Cargar laberinto desde archivo\n");
-    printf("2) Ejecutar BFS (S -> E)\n");
-    printf("3) Ejecutar Dijkstra (S -> E)\n");
+    printf("2) Ejecutar BFS (I -> f)\n");
+    printf("3) Ejecutar Dijkstra (I -> f)\n");
     printf("4) Mostrar matriz de adyacencia\n");
     printf("5) Generar grafo aleatorio y ejecutar BFS\n");
     printf("6) Generar grafo aleatorio y ejecutar Dijkstra\n");
@@ -24,7 +24,7 @@ static void show_menu() {
 
 int main(void) {
     //estructura que almacena el laberinto cargado desde archivo
-    Maze maze = (Maze){0};
+    struct Maze maze = (struct Maze){0};
     
     //estructura del grafo que representa las conexiones entre celdas/nodos
     struct Grafo graph = {0};
@@ -44,7 +44,7 @@ int main(void) {
     srand((unsigned)time(NULL));
 
     printf("Proyecto Laberinto + Grafo\n");
-    printf("Formato de archivo: mismo numero de columnas por fila. Usa '#' para muro, '.' o espacio para camino, 'S' inicio, 'E' meta.\n");
+    printf("Formato de archivo: mismo numero de columnas por fila. Usa 'X' para muro, '.' o espacio para camino, 'I' inicio, 'f' meta.\n");
 
     for (;;) {
         show_menu();
@@ -74,7 +74,7 @@ int main(void) {
                     mazeLoaded = 1;
                     graphReady = 1;
                     printf("Laberinto cargado. Dimensiones: %d x %d. Nodos: %d.\n", maze.rows, maze.cols, graph.vertices);
-                    printf("Inicio (S): indice %d, Meta (E): indice %d.\n", startIndex, goalIndex);
+                    printf("Inicio (I): indice %d, Meta (f): indice %d.\n", startIndex, goalIndex);
                 } else {
                     mazeLoaded = 0;
                     graphReady = 0;
@@ -109,7 +109,7 @@ int main(void) {
                 //mostrar el camino encontrado en el laberinto
                 print_path_on_maze(&maze, &graph, parent, startIndex, goalIndex);
             } else {
-                printf("No hay camino entre S y E.\n");
+                printf("No hay camino entre I y f.\n");
             }
             
             free(parent);
@@ -150,7 +150,7 @@ int main(void) {
                 
                 liberarCamino(camino);
             } else {
-                printf("No hay camino entre S y E.\n");
+                printf("No hay camino entre I y f.\n");
             }
         } else if (option == 4) {
             //OPCION 4: Mostrar la matriz de adyacencia del grafo
@@ -167,16 +167,18 @@ int main(void) {
             if (fgets(input, sizeof(input), stdin) == NULL) {
                 break;
             }
+            //leer el numero de nodos para el grafo
             int vertices = atoi(input);
             if (vertices < 2 || vertices > 100) {
                 printf("Valor fuera de rango.\n");
                 continue;
             }
-            
+            //leer la probabilidad de arista entre nodos
             printf("Probabilidad de arista (0-100%%): ");
             if (fgets(input, sizeof(input), stdin) == NULL) {
                 break;
             }
+            //convertir el porcentaje a probabilidad entre 0.0 y 1.0
             double probPct = atof(input);
             if (probPct < 0.0) probPct = 0.0;
             if (probPct > 100.0) probPct = 100.0;
@@ -209,37 +211,39 @@ int main(void) {
                 int found = bfs(&graph, startIndex, goalIndex, parent, visitOrder, &visitCount);
                 
                 //mostrar resultados
-                print_adjacency_matrix(&graph);
-                printf("BFS desde %d hasta %d\n", startIndex, goalIndex);
-                print_visit_order_simple(visitOrder, visitCount);
+                print_adjacency_matrix(&graph); //mostrar la matriz de adyacencia
+                printf("BFS desde %d hasta %d\n", startIndex, goalIndex); //mostrar nodos de inicio y meta
+                print_visit_order_simple(visitOrder, visitCount); //mostrar orden de visita
                 if (found) {
-                    print_path_indices(parent, startIndex, goalIndex, graph.vertices);
+                    print_path_indices(parent, startIndex, goalIndex, graph.vertices); //mostrar camino encontrado
                 } else {
-                    printf("No hay camino entre %d y %d.\n", startIndex, goalIndex);
+                    printf("No hay camino entre %d y %d.\n", startIndex, goalIndex); //indicar si no hay camino
                 }
                 free(parent);
                 free(visitOrder);
             }
         } else if (option == 6) {
-            //OPCION 6: Generar grafo aleatorio y ejecutar Dijkstra
+            // Generar grafo aleatorio y ejecutar Dijkstra
             printf("Numero de nodos (2-100): ");
             if (fgets(input, sizeof(input), stdin) == NULL) {
                 break;
             }
+            //leer el numero de nodos para el grafo
             int vertices = atoi(input);
             if (vertices < 2 || vertices > 100) {
                 printf("Valor fuera de rango.\n");
                 continue;
             }
-            
+            //leer la probabilidad de arista entre nodos
             printf("Probabilidad de arista (0-100%%): ");
             if (fgets(input, sizeof(input), stdin) == NULL) {
                 break;
             }
+            //convertir el porcentaje a probabilidad entre 0.0 y 1.0
             double probPct = atof(input);
             if (probPct < 0.0) probPct = 0.0;
             if (probPct > 100.0) probPct = 100.0;
-            double edgeProb = probPct / 100.0;
+            double edgeProb = probPct / 100.0;  
 
             //generar un grafo aleatorio
             if (generate_random_graph(&graph, vertices, edgeProb) == 0) {

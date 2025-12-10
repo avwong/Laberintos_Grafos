@@ -17,7 +17,7 @@ R: indices validos dentro de graph->vertices.
 void print_visit_order(const struct Grafo *graph, const int *visitOrder, int visitCount) {
     printf("Orden de visita (BFS):\n");
     for (int i = 0; i < visitCount; ++i) {
-        Point p = graph->indexToCoord[visitOrder[i]];
+        struct Point p = graph->indexToCoord[visitOrder[i]];
         printf("%3d) nodo %d -> (%d, %d)\n", i + 1, visitOrder[i], p.row, p.col);
     }
 }
@@ -39,7 +39,7 @@ E: laberinto, grafo, arreglo parent y nodos inicio/goal.
 S: imprime laberinto con camino marcado con 'o'.
 R: parent describe una ruta valida entre goal y start.
 .*/
-void print_path_on_maze(const Maze *maze, const struct Grafo *graph, const int *parent, int start, int goal) {
+void print_path_on_maze(const struct Maze *maze, const struct Grafo *graph, const int *parent, int start, int goal) {
     char display[MAX_ROWS][MAX_COLS + 1];
     for (int r = 0; r < maze->rows; ++r) {
         strcpy(display[r], maze->cells[r]);
@@ -48,7 +48,7 @@ void print_path_on_maze(const Maze *maze, const struct Grafo *graph, const int *
     // Recorre desde goal hacia start usando parent para marcar el camino.
     int v = goal;
     while (v != -1) {
-        Point p = graph->indexToCoord[v];
+        struct Point p = graph->indexToCoord[v];
         char *cell = &display[p.row][p.col];
         if (v == start) {
             *cell = START;

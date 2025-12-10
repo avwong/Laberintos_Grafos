@@ -10,9 +10,9 @@ R: usar junto a laberinto.c para funciones de carga.
 
 #define MAX_ROWS 128
 #define MAX_COLS 128
-#define WALL '#'
-#define START 'S'
-#define END 'E'
+#define WALL 'X'
+#define START 'I'
+#define END 'f'
 
 struct Point {
     int row;
