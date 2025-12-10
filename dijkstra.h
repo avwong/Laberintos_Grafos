@@ -5,33 +5,36 @@
 
 //estructura para el resultado del camino
 struct Camino {
-    int* nodos;            //lista de nodos/vertices en el camino
-    int longitud;          //numero de nodos
-    int distanciaTotal;    //distancia total del camino
+    int* nodos; //lista de nodos/vertices en el camino creado
+    int longitud; //numero de nodos en el camino
+    int valorTotal; //valor total del camino
 };
 
-// Estructura para la cola de prioridad (min-heap)
+//nodo actual al que se esta comparando el valor
+//estructura para la cola de prioridad (min-heap)
 struct NodoPrioridad {
-    int vertice; //nodo/vértice del grafo
-    int distancia; //distancia desde el inicio
+    int vertice;   //nodo/vertice del grafo
+    int valor; //valor acumulado desde el inicio
 };
 
+//estructura que mantiene los nodos ordenados por valor (el de menor valor esta al frente)
+//se ocupa el menor para saber por cuales aristas son las que menos costo de pasar tienen
 struct ColaPrioridad {
-    NodoPrioridad* heap;
-    int* posiciones;       // Para actualizar prioridades
-    int tamanio;
-    int capacidad;
+    struct NodoPrioridad* heap;
+    int* posiciones; //para actualizaciones de prioridades
+    int tamano; //cuantos elementos hay en el heap
+    int capacidad; //tamano maximo del heap (numero de vertices del grafo)
 };
 
-//funciones de Dijkstra
-Camino* dijkstra(Grafo* grafo, int inicio, int fin);
-void imprimirCamino(Camino* camino);
-void liberarCamino(Camino* camino);
+// funciones de Dijkstra
+struct Camino* dijkstra(struct Grafo* grafo, int inicio, int fin);
+void imprimirCamino(struct Camino* camino);
+void liberarCamino(struct Camino* camino);
 
-//funciones de cola de prioridad
-ColaPrioridad* crearColaPrioridad(int capacidad);
-void insertarCola(ColaPrioridad* cola, int vertice, int distancia);
-NodoPrioridad extraerMinimo(ColaPrioridad* cola);
-void liberarColaPrioridad(ColaPrioridad* cola);
+// funciones de cola de prioridad
+struct ColaPrioridad* crearColaPrioridad(int capacidad);
+void insertarCola(struct ColaPrioridad* cola, int vertice, int valor);
+struct NodoPrioridad extraerMinimo(struct ColaPrioridad* cola);
+void liberarColaPrioridad(struct ColaPrioridad* cola);
 
 #endif
