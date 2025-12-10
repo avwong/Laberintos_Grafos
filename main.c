@@ -26,6 +26,9 @@ struct Graph {
     struct Point *indexToCoord;
 };
 
+/* E: cadena con posible salto de linea. 
+ * S: elimina '\n' o '\r' al final de la cadena. 
+ * R: puntero no nulo a un buffer modificable. */
 static void trim_newline(char *s) {
     size_t len = strlen(s);
     while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r')) {
@@ -34,6 +37,9 @@ static void trim_newline(char *s) {
     }
 }
 
+/* E: grafo previamente creado (puede estar vacio). 
+ * S: libera matrices internas y reinicia contadores. 
+ * R: puntero valido; usar antes de reusar el grafo. */
 static void free_graph(struct Graph *graph) {
     if (graph->adj != NULL) {
         for (int i = 0; i < graph->vertices; ++i) {
@@ -47,6 +53,9 @@ static void free_graph(struct Graph *graph) {
     graph->vertices = 0;
 }
 
+/* E: ruta de archivo de laberinto y puntero Maze. 
+ * S: carga celdas, filas y columnas; retorna 0 si OK, -1 si error. 
+ * R: archivo legible, filas con misma longitud, maximo 128x128. */
 static int load_maze(const char *filename, struct Maze *maze) {
     FILE *f = fopen(filename, "r");
     if (f == NULL) {
@@ -97,6 +106,9 @@ static int load_maze(const char *filename, struct Maze *maze) {
     return 0;
 }
 
+/* E: laberinto cargado, punteros a grafo/start/goal. 
+ * S: construye matriz de adyacencia, mapea indices y ubica S/E; 0 si OK. 
+ * R: laberinto valido, memoria disponible, debe existir S y E. */
 static int build_graph(const struct Maze *maze, struct Graph *graph, int *startIndex, int *goalIndex) {
     int indexMap[MAX_ROWS][MAX_COLS];
     int openCells = 0;
@@ -183,6 +195,9 @@ static int build_graph(const struct Maze *maze, struct Graph *graph, int *startI
     return 0;
 }
 
+/* E: grafo, nodo inicio y meta, arreglos parent/visitOrder y contador. 
+ * S: ejecuta BFS, llena parent y orden visitado, retorna 1 si encontro goal. 
+ * R: arreglos de tamano vertices; indices validos; memoria disponible. */
 static int bfs(const struct Graph *graph, int start, int goal, int *parent, int *visitOrder, int *visitCount) {
     int *visited = (int *)calloc(graph->vertices, sizeof(int));
     int *queue = (int *)calloc(graph->vertices, sizeof(int));
@@ -228,6 +243,9 @@ static int bfs(const struct Graph *graph, int start, int goal, int *parent, int 
     return 0;
 }
 
+/* E: grafo y arreglo de visita BFS con su cantidad. 
+ * S: imprime numero de nodo y coordenadas visitadas. 
+ * R: indices validos dentro de graph->vertices. */
 static void print_visit_order(const struct Graph *graph, const int *visitOrder, int visitCount) {
     printf("Orden de visita (BFS):\n");
     for (int i = 0; i < visitCount; ++i) {
@@ -236,6 +254,9 @@ static void print_visit_order(const struct Graph *graph, const int *visitOrder, 
     }
 }
 
+/* E: arreglo de visita y cantidad. 
+ * S: imprime orden de visita solo con indices. 
+ * R: indices validos. */
 static void print_visit_order_simple(const int *visitOrder, int visitCount) {
     printf("Orden de visita (BFS):\n");
     for (int i = 0; i < visitCount; ++i) {
@@ -243,6 +264,9 @@ static void print_visit_order_simple(const int *visitOrder, int visitCount) {
     }
 }
 
+/* E: laberinto, grafo, arreglo parent y nodos inicio/goal. 
+ * S: imprime laberinto con camino marcado con 'o'. 
+ * R: parent describe una ruta valida entre goal y start. */
 static void print_path_on_maze(const struct Maze *maze, const struct Graph *graph, const int *parent, int start, int goal) {
     char display[MAX_ROWS][MAX_COLS + 1];
     for (int r = 0; r < maze->rows; ++r) {
@@ -269,6 +293,9 @@ static void print_path_on_maze(const struct Maze *maze, const struct Graph *grap
     }
 }
 
+/* E: arreglo parent, indices inicio/goal y numero de vertices. 
+ * S: imprime camino por indices o indica si no existe. 
+ * R: parent de tamano vertices; indices dentro de rango. */
 static void print_path_indices(const int *parent, int start, int goal, int vertices) {
     int *stack = (int *)calloc(vertices, sizeof(int));
     if (stack == NULL) {
@@ -303,6 +330,9 @@ static void print_path_indices(const int *parent, int start, int goal, int verti
     free(stack);
 }
 
+/* E: grafo con matriz de adyacencia. 
+ * S: imprime matriz completa o primeras 30 filas/cols. 
+ * R: matriz cuadrada de tamano vertices. */
 static void print_adjacency_matrix(const struct Graph *graph) {
     int limit = graph->vertices;
     if (limit > 30) {
@@ -320,6 +350,9 @@ static void print_adjacency_matrix(const struct Graph *graph) {
     }
 }
 
+/* E: ninguna. 
+ * S: muestra opciones del menu en consola. 
+ * R: requiere stdout disponible. */
 static void show_menu(void) {
     printf("\n--- Menu ---\n");
     printf("1) Cargar laberinto desde archivo\n");
@@ -330,6 +363,9 @@ static void show_menu(void) {
     printf("> ");
 }
 
+/* E: puntero a grafo, cantidad de vertices (2-100), probabilidad de arista [0,1]. 
+ * S: crea matriz de adyacencia aleatoria simetrica; retorna 0 si OK. 
+ * R: memoria disponible; vertices en rango; edgeProb se ajusta a [0,1]. */
 static int generate_random_graph(struct Graph *graph, int vertices, double edgeProb) {
     if (vertices < 2 || vertices > 100) {
         printf("El numero de nodos debe estar entre 2 y 100.\n");
@@ -370,6 +406,9 @@ static int generate_random_graph(struct Graph *graph, int vertices, double edgeP
     return 0;
 }
 
+/* E: ninguna (interaccion por stdin). 
+ * S: bucle de menu para cargar laberintos, ejecutar BFS y mostrar datos. 
+ * R: entrada valida; archivos legibles; sin integracion de Dijkstra aun. */
 int main(void) {
     struct Maze maze = {0};
     struct Graph graph = {0};
