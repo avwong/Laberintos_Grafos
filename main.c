@@ -57,7 +57,7 @@ int main(void) {
             break; //salir del programa
         }
 
-        //OPCION 1: Cargar laberinto desde archivo
+        //Cargar laberinto desde archivo
         if (option == 1) {
             printf("Ruta del archivo: ");
             if (fgets(input, sizeof(input), stdin) == NULL) {
@@ -106,7 +106,7 @@ int main(void) {
                 }
             }
         } else if (option == 2) {
-            //OPCION 2: Ejecutar BFS en el laberinto cargado
+            //OEjecutar BFS en el laberinto cargado
             if (!mazeLoaded) {
                 printf("Primero cargue un laberinto valido.\n");
                 continue;
@@ -140,7 +140,7 @@ int main(void) {
             free(parent);
             free(visitOrder);
         } else if (option == 3) {
-            //OPCION 3: Ejecutar Dijkstra en el laberinto cargado
+            // Ejecutar Dijkstra en el laberinto cargado
             if (!mazeLoaded) {
                 printf("Primero cargue un laberinto valido.\n");
                 continue;
@@ -178,7 +178,7 @@ int main(void) {
                 printf("No hay camino entre I y F.\n");
             }
         } else if (option == 4) {
-            //OPCION 4: Mostrar la matriz de adyacencia del grafo
+            // Mostrar la matriz de adyacencia del grafo
             if (!graphReady) {
                 printf("Primero cargue un laberinto valido o genere un grafo aleatorio.\n");
                 continue;
@@ -195,7 +195,7 @@ int main(void) {
             //leer el numero de nodos para el grafo
             int vertices = atoi(input);
             if (vertices < 2 || vertices > 100) {
-                printf("Valor fuera de rango.\n");
+                printf("Valor fuera de rango. Debe ser entre 2 y 100.\n");
                 continue;
             }
             //leer la probabilidad de arista entre nodos
@@ -205,8 +205,10 @@ int main(void) {
             }
             //convertir el porcentaje a probabilidad entre 0.0 y 1.0
             double probPct = atof(input);
-            if (probPct < 0.0) probPct = 0.0;
-            if (probPct > 100.0) probPct = 100.0;
+            if (probPct < 0.0 || probPct > 100.0) {
+                printf("Probabilidad fuera de rango. Debe ser 0 a 100.\n");
+                continue;
+            }
             double edgeProb = probPct / 100.0;
 
             //generar un grafo aleatorio con el numero de nodos y probabilidad especificados
@@ -256,7 +258,7 @@ int main(void) {
             //leer el numero de nodos para el grafo
             int vertices = atoi(input);
             if (vertices < 2 || vertices > 100) {
-                printf("Valor fuera de rango.\n");
+                printf("Valor fuera de rango. Debe ser entre 2 y 100.\n");
                 continue;
             }
             //leer la probabilidad de arista entre nodos
@@ -266,8 +268,10 @@ int main(void) {
             }
             //convertir el porcentaje a probabilidad entre 0.0 y 1.0
             double probPct = atof(input);
-            if (probPct < 0.0) probPct = 0.0;
-            if (probPct > 100.0) probPct = 100.0;
+            if (probPct < 0.0 || probPct > 100.0) {
+                printf("Probabilidad fuera de rango. Debe ser 0 a 100.\n");
+                continue;
+            }
             double edgeProb = probPct / 100.0;  
 
             //generar un grafo aleatorio

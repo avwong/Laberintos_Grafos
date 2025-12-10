@@ -4,6 +4,33 @@
 
 #include "dijkstra.h"
 
+//imprime el estado actual de las distancias y visitados en Dijkstra
+static void print_estado_dijkstra(int paso, int actual, const int *val, const int *visitado, int n) {
+    printf("\nPaso %d: procesamos el nodo %d\n", paso, actual);
+    printf("Distancias despues de relajar vecinos:\n");
+
+    for (int i = 0; i < n; ++i) {
+        char dist[16];
+        if (val[i] >= INT_MAX / 8) {
+            snprintf(dist, sizeof(dist), "inf");
+        } else {
+            snprintf(dist, sizeof(dist), "%d", val[i]);
+        }
+
+        const char* estado;
+        if (visitado[i]) {
+            estado = "visitado";
+        } else if (val[i] >= INT_MAX / 8) {
+            estado = "sin ruta";
+        } else {
+            estado = "pendiente";
+        }
+
+        const char* marca = (i == actual) ? " <- actual" : "";
+        printf("  %2d) dist=%-7s estado=%s%s\n", i, dist, estado, marca);
+    }
+}
+
 //FUNCIONES PARA EL HEAP (COLA DE PRIORIDAD)
 
 /*
@@ -349,6 +376,8 @@ struct Camino* dijkstra(struct Grafo* grafo, int inicio, int fin) {
     //insertar el vertice de inicio en la cola
     insertarCola(cola, inicio, 0);
 
+    int paso = 1; //contador de pasos para imprimir estados
+
     //mientras haya vertices en la cola
     while (cola->tamano > 0) {
         //extraer el vertice con menor valor acumulado
@@ -366,11 +395,6 @@ struct Camino* dijkstra(struct Grafo* grafo, int inicio, int fin) {
         
         //marcar como visitado
         visitado[v] = 1;
-        
-        //si llegamos al destino, podemos terminar
-        if (v == fin) {
-            break;
-        }
 
         //explorar todos los vecinos del vertice actual
         for (int u = 0; u < n; ++u) {
@@ -398,6 +422,14 @@ struct Camino* dijkstra(struct Grafo* grafo, int inicio, int fin) {
                 //si ya estaba, la funcion insertarCola reduce su valor si mejora
                 insertarCola(cola, u, nuevoVal);
             }
+        }
+
+        //imprimir estado intermedio despues de relajar vecinos
+        print_estado_dijkstra(paso++, v, val, visitado, n);
+        
+        //si llegamos al destino, podemos terminar
+        if (v == fin) {
+            break;
         }
     }
 
