@@ -27,7 +27,7 @@ struct ColaPrioridad {
 };
 
 // funciones de Dijkstra
-struct Camino* dijkstra(Grafo* grafo, int inicio, int fin);
+struct Camino* dijkstra(struct Grafo* grafo, int inicio, int fin);
 void imprimirCamino(struct Camino* camino);
 void liberarCamino(struct Camino* camino);
 
