@@ -1,8 +1,3 @@
-/*
-E: n/a (archivo de cabecera).
-S: define constantes y estructuras para manejar laberintos.
-R: usar junto a laberinto.c para funciones de carga.
-.*/
 #ifndef LABERINTO_H
 #define LABERINTO_H
 

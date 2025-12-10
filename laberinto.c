@@ -1,8 +1,3 @@
-/*
-E: n/a (implementacion).
-S: utilidades para cargar laberintos desde archivo.
-R: usar con laberinto.h.
-.*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,10 +5,10 @@ R: usar con laberinto.h.
 #include "laberinto.h"
 
 /*
-E: cadena con posible salto de linea.
-S: elimina '\n' o '\r' al final de la cadena.
-R: puntero no nulo a un buffer modificable.
-.*/
+E: cadena de caracteres
+S: elimina el salto de linea al final de la cadena
+R: puntero no nulo
+*/
 void trim_newline(char *s) {
     //validar que el puntero no sea NULL
     if (s == NULL) {
@@ -24,7 +19,6 @@ void trim_newline(char *s) {
     size_t len = strlen(s);
     
     //eliminar caracteres de nueva linea del final
-    //esto es necesario porque fgets() incluye el '\n' en la cadena leida
     while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r')) {
         s[len - 1] = '\0'; //reemplazar el caracter con terminador nulo
         len--; //reducir la longitud
@@ -45,13 +39,12 @@ int load_maze(const char *filename, struct Maze *maze) {
     }
 
     //buffer temporal para leer cada linea del archivo
-    //se usa MAX_COLS + 4 para tener espacio extra
     char buffer[MAX_COLS + 4];
     
     //contador de filas procesadas
     int row = 0;
     
-    //almacena el numero esperado de columnas (se establece con la primera fila)
+    //almacena el numero esperado de columnas
     //esto asegura que todas las filas tengan la misma longitud
     int expectedCols = -1;
 

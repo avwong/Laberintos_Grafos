@@ -1,26 +1,23 @@
-/*
-E: n/a (implementacion).
-S: algoritmo BFS para grafos con matriz 0/1 de adyacencia.
-R: usar con bfs.h y grafo.h.
-.*/
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "bfs.h"
 
+//algoritmo BFS para grafos con matriz 0/1 de adyacencia
+
 /*
 E: grafo, nodo inicio y meta, arreglos parent/visitOrder y contador.
 S: ejecuta BFS, llena parent y orden visitado, retorna 1 si encontro goal.
 R: arreglos de tamano vertices; indices validos; memoria disponible.
-.*/
+*/
 int bfs(const struct Grafo *graph, int start, int goal, int *parent, int *visitOrder, int *visitCount) {
     //reservar memoria para el arreglo de visitados (1 = visitado, 0 = no visitado)
     int *visited = calloc(graph->vertices, sizeof(int));
     
-    //reservar memoria para la cola (implementada con un arreglo circular)
+    //reservar memoria para la cola
     int *queue = calloc(graph->vertices, sizeof(int));
     
-    //indices para controlar la cola: head es el frente, tail es donde se agregan elementos
+    //indices para controlar la cola
     int head = 0;
     int tail = 0;
 
@@ -33,7 +30,6 @@ int bfs(const struct Grafo *graph, int start, int goal, int *parent, int *visitO
     }
 
     //inicializar el arreglo de padres en -1 (indica que no tienen padre)
-    //esto se usa para reconstruir el camino despues
     for (int i = 0; i < graph->vertices; ++i) {
         parent[i] = -1;
     }
@@ -47,9 +43,9 @@ int bfs(const struct Grafo *graph, int start, int goal, int *parent, int *visitO
     //inicializar el contador de nodos visitados
     *visitCount = 0;
 
-    //mientras haya elementos en la cola (head < tail)
+    //mientras haya elementos en la cola
     while (head < tail) {
-        //sacar el primer elemento de la cola (FIFO - First In First Out)
+        //sacar el primer elemento de la cola (FIFO: First In First Out)
         int v = queue[head++];
         
         //registrar este nodo en el orden de visita
