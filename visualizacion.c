@@ -6,13 +6,49 @@
 #include "visualizacion.h"
 
 /*
+E: arreglo parent, indices start/goal, numero de vertices y arreglo de salida.
+S: llena out con la secuencia start->goal y retorna su longitud; -1 si no hay ruta.
+R: parent describe padres validos, tiene espacio para 'vertices' elementos.
+.*/
+int build_path_sequence(const int *parent, int start, int goal, int vertices, int *out) {
+    if (parent == NULL || out == NULL || vertices <= 0 || start < 0 || goal < 0 || start >= vertices || goal >= vertices) {
+        return -1;
+    }
+
+    int len = 0;
+    int v = goal;
+
+    //recorrer hacia atras usando parent hasta llegar a start
+    while (v != -1 && len < vertices) {
+        out[len++] = v;
+        if (v == start) {
+            break;
+        }
+        v = parent[v];
+    }
+
+    //si no se llego a start, el camino es invalido
+    if (v == -1) {
+        return -1;
+    }
+
+    //invertir el arreglo para tener orden start -> goal
+    for (int i = 0; i < len / 2; ++i) {
+        int tmp = out[i];
+        out[i] = out[len - 1 - i];
+        out[len - 1 - i] = tmp;
+    }
+
+    return len;
+}
+
+/*
 E: paso actual, nodo procesado, arreglos de valores y visitados, numero de nodos.
 S: imprime el estado actual de las distancias y visitados en Dijkstra.
 R: arreglos validos de tamano n.
 */
 void print_estado_dijkstra(int paso, int actual, const int *val, const int *visitado, int n) {
     printf("\nPaso %d: procesamos el nodo %d\n", paso, actual);
-    printf("Distancias despues de relajar vecinos:\n");
 
     for (int i = 0; i < n; ++i) {
         char dist[16];
@@ -67,30 +103,220 @@ S: imprime laberinto con camino marcado con 'o'.
 R: parent describe una ruta valida entre goal y start.
 .*/
 void print_path_on_maze(const struct Maze *maze, const struct Grafo *graph, const int *parent, int start, int goal) {
+    int *path = calloc(graph->vertices, sizeof(int));
+    if (path == NULL) {
+        printf("No se pudo reservar memoria para mostrar el laberinto.\n");
+        return;
+    }
+
+    int len = build_path_sequence(parent, start, goal, graph->vertices, path);
+    if (len <= 0) {
+        printf("No hay camino entre I y F.\n");
+        free(path);
+        return;
+    }
+
+    //expandir el camino para incluir celdas intermedias
+    struct Point *expandedPath = calloc(MAX_ROWS * MAX_COLS, sizeof(struct Point));
+    if (expandedPath == NULL) {
+        printf("No se pudo reservar memoria para expandir el camino.\n");
+        free(path);
+        return;
+    }
+
+    int expandedLen = expand_path_with_intermediate_cells(maze, graph, path, len, expandedPath);
+
     char display[MAX_ROWS][MAX_COLS + 1];
     for (int r = 0; r < maze->rows; ++r) {
         strcpy(display[r], maze->cells[r]);
     }
 
-    //recorre desde goal hacia start usando parent para marcar el camino.
-    int v = goal;
-    while (v != -1) {
-        struct Point p = graph->indexToCoord[v];
+    //marcar todas las celdas del camino expandido con 'o', preservando I y F
+    for (int i = 0; i < expandedLen; ++i) {
+        struct Point p = expandedPath[i];
+
+        //validar coordenadas
+        if (p.row < 0 || p.row >= maze->rows || p.col < 0 || p.col >= maze->cols) {
+            continue;
+        }
+
         char *cell = &display[p.row][p.col];
-        if (v == start) {
-            *cell = START;
-        } else if (v == goal) {
-            *cell = END;
-        } else {
+
+        //preservar I y F, marcar todo lo demas con 'o'
+        if (maze->cells[p.row][p.col] != START && maze->cells[p.row][p.col] != END) {
             *cell = 'o';
         }
-        v = parent[v];
     }
 
-    printf("Camino encontrado (marcado con 'o'):\n");
+    printf("\n=== Camino final (marcado con 'o') ===\n");
     for (int r = 0; r < maze->rows; ++r) {
         printf("%s\n", display[r]);
     }
+    printf("\n");
+
+    free(path);
+    free(expandedPath);
+}
+
+/*
+E: laberinto, grafo, camino de nodos y su longitud, arreglo de salida.
+S: expande el camino incluyendo todas las celdas intermedias entre nodos; retorna longitud del camino expandido.
+R: path valido con pathLen nodos; expandedPath tiene espacio suficiente.
+*/
+int expand_path_with_intermediate_cells(const struct Maze *maze, const struct Grafo *graph, const int *path, int pathLen, struct Point *expandedPath) {
+    if (path == NULL || expandedPath == NULL || pathLen <= 0) {
+        return 0;
+    }
+
+    int expandedLen = 0;
+
+    //agregar el primer nodo
+    struct Point firstPoint = graph->indexToCoord[path[0]];
+
+    //validar que el primer punto este dentro de los limites
+    if (firstPoint.row < 0 || firstPoint.row >= maze->rows ||
+        firstPoint.col < 0 || firstPoint.col >= maze->cols) {
+        return 0;
+    }
+
+    expandedPath[expandedLen++] = firstPoint;
+
+    //para cada par de nodos consecutivos, agregar las celdas intermedias
+    for (int i = 1; i < pathLen; ++i) {
+        struct Point from = graph->indexToCoord[path[i - 1]];
+        struct Point to = graph->indexToCoord[path[i]];
+
+        //validar que ambos puntos esten dentro de los limites
+        if (from.row < 0 || from.row >= maze->rows || from.col < 0 || from.col >= maze->cols ||
+            to.row < 0 || to.row >= maze->rows || to.col < 0 || to.col >= maze->cols) {
+            continue;
+        }
+
+        //determinar la direccion del movimiento
+        int rowDiff = to.row - from.row;
+        int colDiff = to.col - from.col;
+
+        //verificar que los nodos sean adyacentes (distancia Manhattan de 2)
+        //en el laberinto visual, nodos adyacentes estan separados por 2 celdas
+        int distance = abs(rowDiff) + abs(colDiff);
+
+        if (distance == 0) {
+            //mismo nodo, continuar
+            continue;
+        }
+
+        if (distance != 2) {
+            //nodos no adyacentes, algo esta mal
+            //intentar agregar solo el nodo destino
+            expandedPath[expandedLen++] = to;
+            continue;
+        }
+
+        //normalizar la direccion (solo movimientos horizontales o verticales)
+        int rowStep = (rowDiff > 0) ? 1 : (rowDiff < 0) ? -1 : 0;
+        int colStep = (colDiff > 0) ? 1 : (colDiff < 0) ? -1 : 0;
+
+        //agregar la celda intermedia entre los dos nodos
+        int currentRow = from.row + rowStep;
+        int currentCol = from.col + colStep;
+
+        //verificar que la celda intermedia este dentro de los limites y no sea pared
+        if (currentRow >= 0 && currentRow < maze->rows &&
+            currentCol >= 0 && currentCol < maze->cols &&
+            maze->cells[currentRow][currentCol] != WALL) {
+            expandedPath[expandedLen].row = currentRow;
+            expandedPath[expandedLen].col = currentCol;
+            expandedLen++;
+        }
+
+        //agregar el nodo destino
+        expandedPath[expandedLen++] = to;
+    }
+
+    return expandedLen;
+}
+
+/*
+E: laberinto, grafo, arreglo parent y nodos start/goal.
+S: imprime frame a frame el recorrido usando 'A' para la posicion actual y 'o' para visitados.
+R: parent describe una ruta valida; el grafo tiene mapeo indexToCoord; buffers dentro de limites.
+.*/
+void print_path_steps(const struct Maze *maze, const struct Grafo *graph, const int *parent, int start, int goal) {
+    int *path = calloc(graph->vertices, sizeof(int));
+    if (path == NULL) {
+        printf("No se pudo reservar memoria para animar el recorrido.\n");
+        return;
+    }
+
+    int len = build_path_sequence(parent, start, goal, graph->vertices, path);
+    if (len <= 0) {
+        printf("No hay camino entre I y F.\n");
+        free(path);
+        return;
+    }
+
+    //expandir el camino para incluir todas las celdas intermedias
+    struct Point *expandedPath = calloc(MAX_ROWS * MAX_COLS, sizeof(struct Point));
+    if (expandedPath == NULL) {
+        printf("No se pudo reservar memoria para expandir el camino.\n");
+        free(path);
+        return;
+    }
+
+    int expandedLen = expand_path_with_intermediate_cells(maze, graph, path, len, expandedPath);
+    if (expandedLen <= 0) {
+        printf("Error: No se pudo expandir el camino.\n");
+        printf("Longitud del camino original: %d nodos\n", len);
+        free(path);
+        free(expandedPath);
+        return;
+    }
+
+    printf("\n=== Recorrido paso a paso (A = posicion actual) ===\n");
+    for (int step = 0; step < expandedLen; ++step) {
+        char frame[MAX_ROWS][MAX_COLS + 1];
+        for (int r = 0; r < maze->rows; ++r) {
+            strcpy(frame[r], maze->cells[r]);
+        }
+
+        //marcar el progreso: 'o' para lo recorrido, 'A' para la celda actual
+        for (int k = 0; k <= step; ++k) {
+            struct Point p = expandedPath[k];
+
+            //validar que las coordenadas esten dentro de los limites
+            if (p.row < 0 || p.row >= maze->rows || p.col < 0 || p.col >= maze->cols) {
+                continue;
+            }
+
+            char *cell = &frame[p.row][p.col];
+
+            //verificar que la celda no sea una pared antes de modificarla
+            if (maze->cells[p.row][p.col] == WALL) {
+                continue;
+            }
+
+            if (k == step) {
+                //mostrar la posicion actual con 'A'
+                *cell = 'A';
+            } else {
+                //marcar las posiciones ya visitadas con 'o', preservando I y F
+                if (maze->cells[p.row][p.col] != START && maze->cells[p.row][p.col] != END) {
+                    *cell = 'o';
+                }
+            }
+        }
+
+        printf("Paso %d de %d:\n", step + 1, expandedLen);
+        for (int r = 0; r < maze->rows; ++r) {
+            printf("%s\n", frame[r]);
+        }
+        printf("\n");
+    }
+
+    printf("=== Animacion completada: %d pasos totales ===\n\n", expandedLen);
+
+    free(path);
+    free(expandedPath);
 }
 
 /*
