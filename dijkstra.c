@@ -318,9 +318,9 @@ struct Camino* dijkstra(Grafo* grafo, int inicio, int fin) {
     }
 
     //reservar memoria para los arreglos auxiliares
-    int* val = (int*)calloc(n, sizeof(int));         //valores acumulados minimos a cada vertice
-    int* parent = (int*)calloc(n, sizeof(int));      //para reconstruir el camino
-    int* visitado = (int*)calloc(n, sizeof(int));    //vertices ya procesados
+    int* val = calloc(n, sizeof(int));         //valores acumulados minimos a cada vertice
+    int* parent = calloc(n, sizeof(int));      //para reconstruir el camino
+    int* visitado = calloc(n, sizeof(int));    //vertices ya procesados
     
     if (val == NULL || parent == NULL || visitado == NULL) {
         free(val);

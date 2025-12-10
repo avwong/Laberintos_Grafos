@@ -72,7 +72,7 @@ S: imprime camino por indices o indica si no existe.
 R: parent de tamano vertices; indices dentro de rango.
 .*/
 void print_path_indices(const int *parent, int start, int goal, int vertices) {
-    int *stack = (int *)calloc(vertices, sizeof(int));
+    int *stack = calloc(vertices, sizeof(int));
     if (stack == NULL) {
         printf("No se pudo reservar memoria para mostrar el camino.\n");
         return;

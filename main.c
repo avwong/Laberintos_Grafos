@@ -65,8 +65,8 @@ int main(void) {
                 printf("Primero cargue un laberinto valido.\n");
                 continue;
             }
-            int *parent = (int *)calloc(graph.vertices, sizeof(int));
-            int *visitOrder = (int *)calloc(graph.vertices, sizeof(int));
+            int *parent = calloc(graph.vertices, sizeof(int));
+            int *visitOrder = calloc(graph.vertices, sizeof(int));
             int visitCount = 0;
             if (parent == NULL || visitOrder == NULL) {
                 printf("No se pudo reservar memoria para BFS.\n");
@@ -116,8 +116,8 @@ int main(void) {
                     goalIndex = rand() % vertices;
                 } while (goalIndex == startIndex && vertices > 1);
 
-                int *parent = (int *)calloc(graph.vertices, sizeof(int));
-                int *visitOrder = (int *)calloc(graph.vertices, sizeof(int));
+                int *parent = calloc(graph.vertices, sizeof(int));
+                int *visitOrder = calloc(graph.vertices, sizeof(int));
                 int visitCount = 0;
                 if (parent == NULL || visitOrder == NULL) {
                     printf("No se pudo reservar memoria para BFS.\n");

@@ -16,7 +16,7 @@ struct Grafo* crearGrafo(int vertices) {
     }
 
     //reservar memoria para la estructura principal del grafo
-    struct Grafo* grafo = (struct Grafo*)calloc(1, sizeof(struct Grafo));
+    struct Grafo* grafo = calloc(1, sizeof(struct Grafo));
     if (grafo == NULL) {
         return NULL;
     }
@@ -25,10 +25,10 @@ struct Grafo* crearGrafo(int vertices) {
     grafo->vertices = vertices;
     
     //reservar memoria para la matriz de pesos (arreglo de punteros a filas)
-    grafo->peso = (int**)calloc(vertices, sizeof(int*));
+    grafo->peso = calloc(vertices, sizeof(int*));
     
     //reservar memoria para el mapeo de indice a coordenadas (para laberintos)
-    grafo->indexToCoord = (struct Point*)calloc(vertices, sizeof(struct Point));
+    grafo->indexToCoord = calloc(vertices, sizeof(struct Point));
     
     //verificar que ambas asignaciones fueron exitosas
     if (grafo->peso == NULL || grafo->indexToCoord == NULL) {
@@ -40,7 +40,7 @@ struct Grafo* crearGrafo(int vertices) {
 
     //reservar memoria para cada fila de la matriz de pesos
     for (int i = 0; i < vertices; ++i) {
-        grafo->peso[i] = (int*)calloc(vertices, sizeof(int));
+        grafo->peso[i] = calloc(vertices, sizeof(int));
         
         //si falla la asignacion, liberar toda la memoria previamente reservada
         if (grafo->peso[i] == NULL) {
